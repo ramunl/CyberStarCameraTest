@@ -20,7 +20,6 @@ import android.support.v4.app.Fragment
 import android.support.v4.app.FragmentActivity
 import android.support.v4.app.FragmentManager
 import android.support.v4.app.FragmentTransaction
-import android.support.v4.content.ContextCompat
 import android.support.v7.app.AppCompatActivity
 import android.widget.Toast
 
@@ -33,9 +32,9 @@ fun FragmentActivity.showToast(text: String) {
 }
 
 
-enum class FragmentId {
-    CAMERA_FRAGMENT_ID,
-    SETTINGS_FRAGMENT_ID,
+enum class FragmentTag {
+    CAMERA_FRAGMENT_TAG,
+    SETTINGS_FRAGMENT_TAG,
 }
 
 
@@ -43,6 +42,9 @@ private fun FragmentManager.inTransaction(func: FragmentTransaction.() -> Fragme
     beginTransaction().func().commit()
 }
 
-fun AppCompatActivity.replaceFragment(containerId:Int, fragment: Fragment, frameId: FragmentId) {
-    supportFragmentManager.inTransaction { replace(containerId, fragment, frameId.name) }
+fun AppCompatActivity.replaceFragment(containerId: Int, fragment: Fragment, frameTag: FragmentTag) {
+    val isAdded = supportFragmentManager.findFragmentByTag(frameTag.name)?.isAdded ?: false
+    if (!isAdded) {
+        supportFragmentManager.inTransaction { replace(containerId, fragment, frameTag.name) }
+    }
 }

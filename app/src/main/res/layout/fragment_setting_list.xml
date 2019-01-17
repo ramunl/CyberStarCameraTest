@@ -1,14 +1,34 @@
 <?xml version="1.0" encoding="utf-8"?>
-<android.support.v7.widget.RecyclerView
+<RelativeLayout
         xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
-        xmlns:tools="http://schemas.android.com/tools"
-        android:id="@+id/list"
-        android:name="ru.cyberstar.cameracapturetest.fragments.FragmentSettings"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        app:layoutManager="LinearLayoutManager"
-        tools:context=".fragments.FragmentSettings"
-        tools:listitem="@layout/fragment_setting"/>
+        android:layout_marginRight="16dp">
+
+    <LinearLayout
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <TextView
+                android:textSize="20sp"
+                android:fontFamily="roboto"
+                android:textStyle="bold"
+                android:text="@string/speed_frame_sec"
+                android:layout_width="wrap_content"
+                android:layout_height="35dp"
+                android:id="@+id/speedLabel"/>
+
+        <EditText
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:fontFamily="roboto"
+                android:textStyle="normal"
+                android:textSize="20sp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="numberDecimal"
+                android:id="@+id/speedEditText"/>
+    </LinearLayout>
+</RelativeLayout>

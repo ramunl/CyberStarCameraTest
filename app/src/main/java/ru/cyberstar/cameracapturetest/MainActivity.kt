@@ -10,30 +10,44 @@ import ru.cyberstar.cameracapturetest.fragments.FragmentSettings
 class MainActivity : AppCompatActivity() {
 
     private val mOnNavigationItemSelectedListener = BottomNavigationView.OnNavigationItemSelectedListener { item ->
-        when (item.itemId) {
-            R.id.navigation_dashboard -> {
-                showArticlesFragment()
-                return@OnNavigationItemSelectedListener true
-            }
-            R.id.navigation_notifications -> {
-                showSettingsFragment()
-                return@OnNavigationItemSelectedListener true
-            }
-        }
-        false
+        return@OnNavigationItemSelectedListener showSelectedFragment(item.itemId)
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putInt("selectedItemId", navigation.selectedItemId)
+
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener)
+        val selectedItemId = savedInstanceState?.getInt("selectedItemId") ?: R.id.navigation_camera
+        showSelectedFragment(selectedItemId)
     }
 
-    private fun showArticlesFragment() {
-        replaceFragment(R.id.fragmentContainer, CameraFragment.newInstance(), FragmentId.CAMERA_FRAGMENT_ID)
+    private fun showSelectedFragment(selectedItemId: Int): Boolean {
+        return when (selectedItemId) {
+            R.id.navigation_camera -> {
+                showCamera()
+                true
+            }
+            R.id.navigation_settings -> {
+                showSettings()
+                true
+            }
+            else -> {
+                false
+            }
+        }
     }
-    private fun showSettingsFragment() {
-        replaceFragment(R.id.fragmentContainer, FragmentSettings.newInstance(1), FragmentId.SETTINGS_FRAGMENT_ID)
+
+    private fun showCamera() {
+        replaceFragment(R.id.fragmentContainer, CameraFragment.newInstance(), FragmentTag.CAMERA_FRAGMENT_TAG)
+    }
+
+    private fun showSettings() {
+        replaceFragment(R.id.fragmentContainer, FragmentSettings.newInstance(), FragmentTag.SETTINGS_FRAGMENT_TAG)
     }
 }

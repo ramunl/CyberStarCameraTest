@@ -17,7 +17,6 @@
 package ru.cyberstar.cameracapturetest.fragments
 
 import android.Manifest
-import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -55,6 +54,8 @@ import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
 import ru.cyberstar.cameracapturetest.tools.ImageSaver
 import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.helpers.CompareSizesByArea
+import ru.cyberstar.cameracapturetest.fragments.helpers.PIC_FILE_NAME
+import ru.cyberstar.cameracapturetest.fragments.helpers.REQUEST_CAMERA_PERMISSION
 import ru.cyberstar.cameracapturetest.showToast
 import ru.cyberstar.cameracapturetest.views.AutoFitTextureView
 import java.io.File
@@ -262,14 +263,16 @@ class CameraFragment : Fragment(), View.OnClickListener,
     ): View? = inflater.inflate(R.layout.fragment_camera, container, false)
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        view.findViewById<View>(R.id.picture).setOnClickListener(this)
-        view.findViewById<View>(R.id.info).setOnClickListener(this)
+      //  view.findViewById<View>(R.id.picture).setOnClickListener(this)
+     //   view.findViewById<View>(R.id.info).setOnClickListener(this)
         textureView = view.findViewById(R.id.texture)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
         super.onActivityCreated(savedInstanceState)
-        file = File(activity!!.getExternalFilesDir(null), PIC_FILE_NAME)
+        file = File(activity!!.getExternalFilesDir(null),
+            PIC_FILE_NAME
+        )
     }
 
 
@@ -298,7 +301,9 @@ class CameraFragment : Fragment(), View.OnClickListener,
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
             ConfirmationDialog().show(childFragmentManager, FRAGMENT_DIALOG)
         } else {
-            requestPermissions(arrayOf(Manifest.permission.CAMERA), REQUEST_CAMERA_PERMISSION)
+            requestPermissions(arrayOf(Manifest.permission.CAMERA),
+                REQUEST_CAMERA_PERMISSION
+            )
         }
     }
 
@@ -692,7 +697,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
     }
 
     override fun onClick(view: View) {
-        when (view.id) {
+      /*  when (view.id) {
             R.id.picture -> lockFocus()
             R.id.info -> {
                 if (activity != null) {
@@ -702,7 +707,7 @@ class CameraFragment : Fragment(), View.OnClickListener,
                             .show()
                 }
             }
-        }
+        }*/
     }
 
     private fun setAutoFlash(requestBuilder: CaptureRequest.Builder) {
