@@ -20,20 +20,8 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
-import android.graphics.ImageFormat
-import android.graphics.Matrix
-import android.graphics.Point
-import android.graphics.RectF
-import android.graphics.SurfaceTexture
-import android.hardware.camera2.CameraAccessException
-import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CameraCharacteristics
-import android.hardware.camera2.CameraDevice
-import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CameraMetadata
-import android.hardware.camera2.CaptureRequest
-import android.hardware.camera2.CaptureResult
-import android.hardware.camera2.TotalCaptureResult
+import android.graphics.*
+import android.hardware.camera2.*
 import android.media.ImageReader
 import android.os.Bundle
 import android.os.Handler
@@ -44,19 +32,15 @@ import android.support.v4.content.ContextCompat
 import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
-import android.view.LayoutInflater
-import android.view.Surface
-import android.view.TextureView
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ConfirmationDialog
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
-import ru.cyberstar.cameracapturetest.tools.ImageSaver
-import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.helpers.CompareSizesByArea
 import ru.cyberstar.cameracapturetest.fragments.helpers.PIC_FILE_NAME
 import ru.cyberstar.cameracapturetest.fragments.helpers.REQUEST_CAMERA_PERMISSION
 import ru.cyberstar.cameracapturetest.showToast
+import ru.cyberstar.cameracapturetest.tools.ImageSaver
 import ru.cyberstar.cameracapturetest.views.AutoFitTextureView
 import java.io.File
 import java.util.Arrays
@@ -356,7 +340,7 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
                 // coordinate.
                 val displayRotation = activity!!.windowManager.defaultDisplay.rotation
 
-                sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)
+                sensorOrientation = characteristics.get(CameraCharacteristics.SENSOR_ORIENTATION)!!
                 val swappedDimensions = areDimensionsSwapped(displayRotation)
 
                 val displaySize = Point()
@@ -592,7 +576,7 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
     /**
      * Lock the focus as the first step for a still image capture.
      */
-    private fun lockFocus() {
+    protected fun lockFocus() {
         try {
             // This is how to tell the camera to lock focus.
             previewRequestBuilder.set(CaptureRequest.CONTROL_AF_TRIGGER,
@@ -638,7 +622,7 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
             // This is the CaptureRequest.Builder that we use to take a picture.
             val captureBuilder = cameraDevice?.createCaptureRequest(
                     CameraDevice.TEMPLATE_STILL_CAPTURE)?.apply {
-                addTarget(imageReader?.surface)
+                addTarget(imageReader?.surface!!)
 
                 // Sensor orientation is 90 for most devices, or 270 for some devices (eg. Nexus 5X)
                 // We have to take that into account and rotate JPEG properly.

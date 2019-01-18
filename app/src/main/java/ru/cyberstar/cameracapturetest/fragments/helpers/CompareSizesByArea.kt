@@ -2,8 +2,7 @@ package ru.cyberstar.cameracapturetest.fragments.helpers
 
 import android.util.Size
 import java.lang.Long.signum
-
-import java.util.Comparator
+import java.util.*
 
 /**
  * Compares two `Size`s based on their areas.

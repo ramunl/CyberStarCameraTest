@@ -21,13 +21,22 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import kotlinx.android.synthetic.main.fragment_camera.*
-import ru.cyberstar.cameracapturetest.R
+import ru.cyberstar.cameracapturetest.fragments.helpers.FPS_DEFAULT
+import ru.cyberstar.cameracapturetest.fragments.helpers.FPS_KEY
+import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper
+import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper.get
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 
 class CameraFragment : CameraBaseFragment() {
+
     companion object {
         @JvmStatic
         fun newInstance(): CameraFragment = CameraFragment()
     }
+
+    private var scheduledFuture: ScheduledFuture<*>? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -42,7 +51,22 @@ class CameraFragment : CameraBaseFragment() {
         return rootView
     }
 
-    private fun onPlayButtonClicked(isPlaying: Boolean) {
+    @Synchronized
+    private  fun onPlayButtonClicked(isPlaying: Boolean) {
+        val millisecond = 1000
+        val fps: Int? = PreferenceHelper.prefs()[FPS_KEY, FPS_DEFAULT]
+
+        if(isPlaying) {
+            scheduledFuture?.let {
+                it.cancel(true)
+                scheduledFuture = null
+            }
+        } else {
+            scheduledFuture = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+                { lockFocus() }, 0,
+                (millisecond / fps!!).toLong(), TimeUnit.MILLISECONDS
+            )
+        }
 
     }
 }
