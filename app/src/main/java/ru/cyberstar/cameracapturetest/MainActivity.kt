@@ -4,7 +4,7 @@ import android.os.Bundle
 import android.support.design.widget.BottomNavigationView
 import android.support.v7.app.AppCompatActivity
 import kotlinx.android.synthetic.main.activity_main.*
-import ru.cyberstar.cameracapturetest.fragments.CameraFragment
+import ru.cyberstar.cameracapturetest.fragments.CameraBaseFragment
 import ru.cyberstar.cameracapturetest.fragments.FragmentSettings
 
 class MainActivity : AppCompatActivity() {
@@ -44,7 +44,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun showCamera() {
-        replaceFragment(R.id.fragmentContainer, CameraFragment.newInstance(), FragmentTag.CAMERA_FRAGMENT_TAG)
+        replaceFragment(R.id.fragmentContainer, CameraBaseFragment.newInstance(), FragmentTag.CAMERA_FRAGMENT_TAG)
     }
 
     private fun showSettings() {

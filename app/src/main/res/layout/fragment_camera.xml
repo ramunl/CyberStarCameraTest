@@ -14,12 +14,43 @@
  limitations under the License.
 -->
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+                android:layout_width="match_parent" android:layout_height="match_parent">
 
     <ru.cyberstar.cameracapturetest.views.AutoFitTextureView
-        android:id="@+id/texture"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
+            android:id="@+id/texture"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    <TextView
+            android:text="00 FPS"
+            android:id="@+id/currentFPS"
+            style="@style/LabelStyle"/>
+
+    <TextView
+            android:layout_below="@id/currentFPS"
+            android:text="00:00"
+            android:id="@+id/timer"
+            style="@style/LabelStyle"/>
+
+    <TextView
+            android:layout_alignParentEnd="true"
+            android:text="buffered:0000 images"
+            android:id="@+id/imagesNumCaptured"
+            style="@style/LabelStyle"/>
+
+    <TextView
+            android:layout_below="@id/imagesNumCaptured"
+            android:layout_alignParentEnd="true"
+            android:text="speed:0000 img/sec"
+            android:id="@+id/bufferingSpeed"
+            style="@style/LabelStyle"/>
+
+
+    <ToggleButton android:layout_alignParentBottom="true"
+                  android:layout_centerHorizontal="true"
+                  android:textOff="@string/start_label"
+                  android:textOn="@string/stop_label"
+                  android:id="@+id/playButton"
+                  style="@style/ButtonStyle"/>
 
 </RelativeLayout>
