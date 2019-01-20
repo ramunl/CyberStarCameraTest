@@ -7,6 +7,7 @@ class CyberApp : Application() {
     init {
         instance = this
     }
+
     companion object {
         private var instance: CyberApp? = null
 

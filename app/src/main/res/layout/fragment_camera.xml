@@ -13,44 +13,57 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent" android:layout_height="match_parent">
 
-    <ru.cyberstar.cameracapturetest.views.AutoFitTextureView
-            android:id="@+id/texture"
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <variable
+                name="viewModel"
+                type="ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel"/>
+    </data>
+
+    <RelativeLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-    <TextView
-            android:text="00 FPS"
-            android:id="@+id/currentFPS"
-            style="@style/LabelStyle"/>
-
-    <TextView
-            android:layout_below="@id/currentFPS"
-            android:text="00:00"
-            android:id="@+id/timer"
-            style="@style/LabelStyle"/>
-
-    <TextView
-            android:layout_alignParentEnd="true"
-            android:text="buffered:0000 images"
-            android:id="@+id/imagesNumCaptured"
-            style="@style/LabelStyle"/>
-
-    <TextView
-            android:layout_below="@id/imagesNumCaptured"
-            android:layout_alignParentEnd="true"
-            android:text="speed:0000 img/sec"
-            android:id="@+id/bufferingSpeed"
-            style="@style/LabelStyle"/>
+            android:layout_height="match_parent">
 
 
-    <ToggleButton android:layout_alignParentBottom="true"
-                  android:layout_centerHorizontal="true"
-                  android:textOff="@string/start_label"
-                  android:textOn="@string/stop_label"
-                  android:id="@+id/playButton"
-                  style="@style/ButtonStyle"/>
+        <ru.cyberstar.cameracapturetest.views.AutoFitTextureView
+                android:id="@+id/texture"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
 
-</RelativeLayout>
+        <TextView
+                android:text="00 FPS"
+                android:id="@+id/currentFPS"
+                style="@style/LabelStyle"/>
+
+        <TextView
+                android:layout_below="@id/currentFPS"
+                android:id="@+id/captureTimer"
+                style="@style/LabelStyle"/>
+
+        <TextView
+                android:layout_alignParentEnd="true"
+                android:text="buffered:0000 images"
+                android:id="@+id/imagesNumCaptured"
+                style="@style/LabelStyle"/>
+
+        <TextView
+                android:layout_below="@id/imagesNumCaptured"
+                android:layout_alignParentEnd="true"
+                android:text="speed:0000 img/sec"
+                android:id="@+id/bufferingSpeed"
+                style="@style/LabelStyle"/>
+
+
+        <ToggleButton android:layout_alignParentBottom="true"
+                      android:layout_centerHorizontal="true"
+                      android:textOff="@string/start_label"
+                      android:textOn="@string/stop_label"
+                      android:id="@+id/playButton"
+                      style="@style/ButtonStyle"/>
+
+    </RelativeLayout>
+
+</layout>

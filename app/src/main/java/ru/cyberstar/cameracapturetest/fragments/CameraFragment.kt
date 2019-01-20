@@ -20,20 +20,36 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
+import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.synthetic.main.fragment_camera.*
+import kotlinx.android.synthetic.main.fragment_camera.view.*
 import ru.cyberstar.cameracapturetest.fragments.helpers.FPS_DEFAULT
 import ru.cyberstar.cameracapturetest.fragments.helpers.FPS_KEY
 import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper
 import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper.get
+import ru.cyberstar.cameracapturetest.tools.InjectorUtils
+import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 class CameraFragment : CameraBaseFragment() {
 
+    val timerFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
+    lateinit var timer: TextView
+
     companion object {
         @JvmStatic
         fun newInstance(): CameraFragment = CameraFragment()
+    }
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
     }
 
     private var scheduledFuture: ScheduledFuture<*>? = null
@@ -43,30 +59,48 @@ class CameraFragment : CameraBaseFragment() {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        var rootView = super.onCreateView(inflater, container, savedInstanceState)
-        playButton?.setOnCheckedChangeListener { _, isChecked ->
+        val rootView = super.onCreateView(inflater, container, savedInstanceState)
+        rootView!!.playButton!!.setOnCheckedChangeListener { _, isChecked ->
             onPlayButtonClicked(isChecked)
         }
-
+        subscribeUI()
         return rootView
     }
 
     @Synchronized
-    private  fun onPlayButtonClicked(isPlaying: Boolean) {
+    private fun onPlayButtonClicked(startWorker: Boolean) {
         val millisecond = 1000
+        val startTime = System.currentTimeMillis()
         val fps: Int? = PreferenceHelper.prefs()[FPS_KEY, FPS_DEFAULT]
-
-        if(isPlaying) {
+        val period = (millisecond / fps!!).toLong()
+        if (startWorker) {
+            scheduledFuture = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
+                {
+                    lockFocus()
+                    updateTimerView(System.currentTimeMillis() - startTime)
+                }, 0,
+                period, TimeUnit.MILLISECONDS
+            )
+        } else {
             scheduledFuture?.let {
                 it.cancel(true)
                 scheduledFuture = null
             }
-        } else {
-            scheduledFuture = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
-                { lockFocus() }, 0,
-                (millisecond / fps!!).toLong(), TimeUnit.MILLISECONDS
-            )
-        }
 
+        }
+    }
+
+
+    fun subscribeUI() {
+        val factory = InjectorUtils.provideCameraViewModelFactory()
+        val viewModel = ViewModelProviders.of(this, factory)
+            .get(CameraViewModel::class.java)
+        binding.setVariable(0, viewModel)
+    }
+
+    private fun updateTimerView(duration: Long) {
+        activity?.runOnUiThread {
+            captureTimer.text = timerFormat.format(duration)
+        }
     }
 }
