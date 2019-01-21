@@ -1,8 +1,8 @@
 package ru.cyberstar.cameracapturetest
 
 import android.os.Bundle
-import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import kotlinx.android.synthetic.main.activity_main.*
 import ru.cyberstar.cameracapturetest.fragments.CameraFragment
 import ru.cyberstar.cameracapturetest.fragments.FragmentSettings

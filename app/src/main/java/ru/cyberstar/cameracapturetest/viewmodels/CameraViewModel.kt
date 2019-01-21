@@ -37,13 +37,13 @@ class CameraViewModel : ViewModel() {
             set(value) {
                 field = value
                 notifyPropertyChanged(BR.timer)
+                notifyPropertyChanged(BR.currentFPS)
             }
 
         @get:Bindable
-        var imagesPerSecSpeed: Int = 0
-            set(value) {
-                field = value
-                notifyPropertyChanged(BR.imagesPerSecSpeed)
+        var currentFPS: Int = 0
+            get() {
+                return if (timeStamp > 0) (field * MILLISECONDS_IN_SEC / timeStamp).toInt() else 0
             }
 
         @get:Bindable
@@ -52,9 +52,7 @@ class CameraViewModel : ViewModel() {
                 field = value
                 notifyPropertyChanged(BR.framesCaptured)
             }
-            get() {
-                return if (timeStamp > 0) (field * MILLISECONDS_IN_SEC / timeStamp).toInt() else 0
-            }
+
 
         fun updateTimeStamp(timeStamp: Long) {
             timer = timerFormat.format(timeStamp)

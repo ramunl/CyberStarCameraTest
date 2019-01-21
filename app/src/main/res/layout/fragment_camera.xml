@@ -15,7 +15,7 @@
 -->
 
 
-<layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto">
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
 
     <data>
         <variable
@@ -34,7 +34,7 @@
                 android:layout_height="match_parent"/>
 
         <TextView
-                android:text="@{`FPS: ` + viewModel.layoutFields.imagesPerSecSpeed}"
+                android:text="@{`FPS: ` + viewModel.layoutFields.currentFPS}"
                 android:id="@+id/currentFPS"
                 style="@style/LabelStyle"/>
 
