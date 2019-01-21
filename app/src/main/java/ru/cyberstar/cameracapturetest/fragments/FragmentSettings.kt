@@ -7,6 +7,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
 import androidx.fragment.app.Fragment
+import kotlinx.android.synthetic.main.fragment_setting_list.view.*
+import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.helpers.FPS_DEFAULT
 import ru.cyberstar.cameracapturetest.fragments.helpers.FPS_KEY
 import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper.get
@@ -15,28 +17,17 @@ import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper.set
 
 class FragmentSettings : Fragment() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-    }
-
     lateinit var fpsEditText: EditText
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-      /*  val view = inflater.inflate(R.layout.fragment_setting_list, container, false)
+        val view = inflater.inflate(R.layout.fragment_setting_list, container, false)
         val fps: Int? = prefs()[FPS_KEY, FPS_DEFAULT]
         fpsEditText = view.fpsEditText
         view.fpsEditText.setText(fps.toString())
-        return view*/
-        return null
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-
+        return view
     }
 
     override fun onDetach() {

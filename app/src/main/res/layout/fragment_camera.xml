@@ -34,26 +34,20 @@
                 android:layout_height="match_parent"/>
 
         <TextView
-                android:text="00 FPS"
+                android:text="@{`FPS: ` + viewModel.layoutFields.imagesPerSecSpeed}"
                 android:id="@+id/currentFPS"
                 style="@style/LabelStyle"/>
 
         <TextView
+                android:text="@{viewModel.layoutFields.timer}"
                 android:layout_below="@id/currentFPS"
                 android:id="@+id/captureTimer"
                 style="@style/LabelStyle"/>
 
         <TextView
                 android:layout_alignParentEnd="true"
-                android:text="buffered:0000 images"
+                android:text="@{`IMG captured: ` + viewModel.layoutFields.framesCaptured}"
                 android:id="@+id/imagesNumCaptured"
-                style="@style/LabelStyle"/>
-
-        <TextView
-                android:layout_below="@id/imagesNumCaptured"
-                android:layout_alignParentEnd="true"
-                android:text="speed:0000 img/sec"
-                android:id="@+id/bufferingSpeed"
                 style="@style/LabelStyle"/>
 
 

@@ -35,12 +35,14 @@ import android.view.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
+import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ConfirmationDialog
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
 import ru.cyberstar.cameracapturetest.fragments.helpers.CompareSizesByArea
 import ru.cyberstar.cameracapturetest.fragments.helpers.PIC_FILE_NAME
 import ru.cyberstar.cameracapturetest.fragments.helpers.REQUEST_CAMERA_PERMISSION
 import ru.cyberstar.cameracapturetest.showToast
+import ru.cyberstar.cameracapturetest.tools.CameraProvider
 import ru.cyberstar.cameracapturetest.tools.ImageSaver
 import ru.cyberstar.cameracapturetest.views.AutoFitTextureView
 import java.io.File
@@ -51,8 +53,8 @@ import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
 
-open class CameraBaseFragment : Fragment(), View.OnClickListener,
-    ActivityCompat.OnRequestPermissionsResultCallback {
+open abstract class CameraBaseFragment : Fragment(), View.OnClickListener,
+    ActivityCompat.OnRequestPermissionsResultCallback, CameraProvider, ImageReader.OnImageAvailableListener {
 
     /**
      * [TextureView.SurfaceTextureListener] handles several lifecycle events on a
@@ -147,9 +149,9 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
      * This a callback object for the [ImageReader]. "onImageAvailable" will be called when a
      * still image is ready to be saved.
      */
-    private val onImageAvailableListener = ImageReader.OnImageAvailableListener {
-        backgroundHandler?.post(ImageSaver(it.acquireNextImage(), file))
-    }
+    /*private val onImageAvailableListener = ImageReader.OnImageAvailableListener {
+       // backgroundHandler?.post(ImageSaver(it.acquireNextImage(), file))
+    }*/
 
     /**
      * [CaptureRequest.Builder] for the camera preview
@@ -255,15 +257,14 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-     //   binding = DataBindingUtil.inflate(inflater, R.layout.fragment_camera, container, false)
-       // return binding.root
-        return null
+        binding = DataBindingUtil.inflate(inflater, R.layout.fragment_camera, container, false)
+        return binding.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         //  view.findViewById<View>(R.id.picture).setOnClickListener(this)
         //   view.findViewById<View>(R.id.info).setOnClickListener(this)
-      //  textureView = view.findViewById(R.id.texture)
+        textureView = view.findViewById(R.id.texture)
     }
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -355,7 +356,7 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
                     largest.width, largest.height,
                     ImageFormat.JPEG, /*maxImages*/ 2
                 ).apply {
-                    setOnImageAvailableListener(onImageAvailableListener, backgroundHandler)
+                    setOnImageAvailableListener(this@CameraBaseFragment, backgroundHandler)
                 }
 
                 // Find out if we need to swap dimension to get the preview size relative to sensor
@@ -607,7 +608,7 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
     /**
      * Lock the focus as the first step for a still image capture.
      */
-    protected fun lockFocus() {
+    override fun imageCapture() {
         try {
             // This is how to tell the camera to lock focus.
             previewRequestBuilder.set(
@@ -687,8 +688,8 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
                     request: CaptureRequest,
                     result: TotalCaptureResult
                 ) {
-                    activity!!.showToast("Saved: $file")
-                    Log.d(TAG, file.toString())
+            //        activity!!.showToast("Saved: $file")
+                //    Log.d(TAG, file.toString())
                     unlockFocus()
                 }
             }
@@ -747,12 +748,12 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
     }
 
     private fun setAutoFlash(requestBuilder: CaptureRequest.Builder) {
-        if (flashSupported) {
+        /*if (flashSupported) {
             requestBuilder.set(
                 CaptureRequest.CONTROL_AE_MODE,
                 CaptureRequest.CONTROL_AE_MODE_ON_AUTO_FLASH
             )
-        }
+        }*/
     }
 
     companion object {
@@ -868,8 +869,5 @@ open class CameraBaseFragment : Fragment(), View.OnClickListener,
                 return choices[0]
             }
         }
-
-        @JvmStatic
-        fun newInstance(): CameraBaseFragment = CameraBaseFragment()
     }
 }

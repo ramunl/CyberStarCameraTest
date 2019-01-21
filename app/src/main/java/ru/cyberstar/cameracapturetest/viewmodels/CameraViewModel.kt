@@ -16,14 +16,67 @@
 
 package ru.cyberstar.cameracapturetest.viewmodels
 
-import androidx.lifecycle.MutableLiveData
+import androidx.databinding.BaseObservable
+import androidx.databinding.Bindable
 import androidx.lifecycle.ViewModel
+import ru.cyberstar.cameracapturetest.BR
+import ru.cyberstar.cameracapturetest.fragments.helpers.MILLISECONDS_IN_SEC
+import java.text.SimpleDateFormat
+import java.util.*
 
-class CameraViewModel internal constructor(
-) : ViewModel() {
-    var plant: MutableLiveData<Int> = MutableLiveData()
+class CameraViewModel : ViewModel() {
 
-    init {
-        plant.value = 10
+    var layoutFields = CameraLayoutFields()
+
+    class CameraLayoutFields : BaseObservable() {
+
+        private val timerFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
+
+        @get:Bindable
+        var timer: String = ""
+            set(value) {
+                field = value
+                notifyPropertyChanged(BR.timer)
+            }
+
+        @get:Bindable
+        var imagesPerSecSpeed: Int = 0
+            set(value) {
+                field = value
+                notifyPropertyChanged(BR.imagesPerSecSpeed)
+            }
+
+        @get:Bindable
+        var framesCaptured: Int = 0
+            set(value) {
+                field = value
+                notifyPropertyChanged(BR.framesCaptured)
+            }
+            get() {
+                return if (timeStamp > 0) (field * MILLISECONDS_IN_SEC / timeStamp).toInt() else 0
+            }
+
+        fun updateTimeStamp(timeStamp: Long) {
+            timer = timerFormat.format(timeStamp)
+            this.timeStamp = timeStamp
+        }
+
+        private var timeStamp: Long = 0
+
     }
+
+
+    fun incImageCounter() {
+        layoutFields.framesCaptured++
+    }
+
+    fun resetImageCounter() {
+        layoutFields.framesCaptured = 0
+    }
+
+    fun updateTimeStamp(timeStamp: Long) {
+        layoutFields.updateTimeStamp(timeStamp)
+    }
+
+
 }

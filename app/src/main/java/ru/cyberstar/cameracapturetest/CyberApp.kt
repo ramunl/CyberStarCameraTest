@@ -1,4 +1,4 @@
-package ru.cyberstar.cameracapturetest;
+package ru.cyberstar.cameracapturetest
 
 import android.app.Application
 import android.content.Context
