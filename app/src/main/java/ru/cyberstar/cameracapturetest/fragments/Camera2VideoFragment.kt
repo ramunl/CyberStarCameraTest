@@ -152,7 +152,7 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
 
 
     override fun onImageAvailable(reader: ImageReader?) {
-        val bmp = screenCapture.toJpeg(reader)
+        val bmp = screenCapture.startCapture(context!!, reader)
         bmp?.let {
             activity?.runOnUiThread {framePreview?.setImageBitmap(bmp)}
         }
@@ -443,7 +443,7 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
                 width, height, videoSize
             )
 
-            screenCapture = ScreenCapture(videoSize.width,  videoSize.height)
+            screenCapture = ScreenCapture(previewSize.width,  previewSize.height)
 
             /*mImageReader = ImageReader.newInstance(
                 videoSize.width,
