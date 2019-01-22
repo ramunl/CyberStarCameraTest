@@ -14,12 +14,11 @@ object ImageCaptureWorker {
 
     private var scheduledFuture: ScheduledFuture<*>? = null
     private var startTime: Long = 0
+    private var framesCaptured:Int = 0
 
     private lateinit var cameraViewModel: CameraViewModel
-    private lateinit var cameraProvider: CameraProvider
 
-    fun injectModel(provider: CameraProvider, vewModel: CameraViewModel) {
-        cameraProvider = provider
+    fun injectModel(vewModel: CameraViewModel) {
         cameraViewModel = vewModel
     }
 
@@ -33,16 +32,15 @@ object ImageCaptureWorker {
     fun start() {
         cameraViewModel.resetImageCounter()
         cameraViewModel.updateTimeStamp(0)
-        val fps: Int? = PreferenceHelper.prefs()[FPS_KEY, FPS_DEFAULT]
-
-        val period = (MILLISECONDS_IN_SEC / fps!!).toLong()
         startTime = System.currentTimeMillis()
+        framesCaptured = 0
         scheduledFuture = Executors.newSingleThreadScheduledExecutor().scheduleAtFixedRate(
             {
-                cameraProvider.imageCapture()
+                cameraViewModel.setCurrentFPS(cameraViewModel.layoutFields.framesCaptured - framesCaptured)
                 cameraViewModel.updateTimeStamp(System.currentTimeMillis() - startTime)
+                framesCaptured = cameraViewModel.layoutFields.framesCaptured
             }, 0,
-            period, TimeUnit.MILLISECONDS
+            MILLISECONDS_IN_SEC, TimeUnit.MILLISECONDS
         )
     }
 

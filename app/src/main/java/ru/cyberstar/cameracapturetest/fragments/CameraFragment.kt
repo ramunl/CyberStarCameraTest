@@ -24,11 +24,12 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.synthetic.main.fragment_camera.view.*
 import ru.cyberstar.cameracapturetest.BR
+import ru.cyberstar.cameracapturetest.tools.CameraProvider
 import ru.cyberstar.cameracapturetest.tools.ImageCaptureWorker
 import ru.cyberstar.cameracapturetest.tools.InjectorUtils
 import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel
 
-class CameraFragment : CameraBaseFragment() {
+class CameraFragment : Camera2VideoFragment() {
 
     companion object {
         @JvmStatic
@@ -60,11 +61,32 @@ class CameraFragment : CameraBaseFragment() {
     private fun subscribeUI() {
         val factory = InjectorUtils.provideCameraViewModelFactory()
         viewModel = ViewModelProviders.of(this, factory).get(CameraViewModel::class.java)
-        ImageCaptureWorker.injectModel(this, viewModel)
+        ImageCaptureWorker.injectModel(viewModel)
         binding.setVariable(BR.viewModel, viewModel)
     }
 
     override fun onImageAvailable(reader: ImageReader?) {
+        var image = reader?.acquireLatestImage()
+        var planes = image?.planes
+
+        /*final int total = planes[0].getRowStride() * mHeight;
+        if (mRgbBuffer == null || mRgbBuffer.length < total)
+            mRgbBuffer = new int[total];
+
+        getRGBIntFromPlanes(planes);*/
+
+        image?.close()
         viewModel.incImageCounter()
     }
+
+    override fun onPause() {
+        super.onPause()
+        ImageCaptureWorker.stop()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        ImageCaptureWorker.start()
+    }
+
 }

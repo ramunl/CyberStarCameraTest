@@ -51,12 +51,14 @@
                 style="@style/LabelStyle"/>
 
 
-        <ToggleButton android:layout_alignParentBottom="true"
-                      android:layout_centerHorizontal="true"
-                      android:textOff="@string/start_label"
-                      android:textOn="@string/stop_label"
-                      android:id="@+id/playButton"
-                      style="@style/ButtonStyle"/>
+        <ToggleButton
+                android:visibility="gone"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:textOff="@string/start_label"
+                android:textOn="@string/stop_label"
+                android:id="@+id/playButton"
+                style="@style/ButtonStyle"/>
 
     </RelativeLayout>
 

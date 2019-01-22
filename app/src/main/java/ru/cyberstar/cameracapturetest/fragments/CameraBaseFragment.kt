@@ -608,7 +608,7 @@ open abstract class CameraBaseFragment : Fragment(), View.OnClickListener,
     /**
      * Lock the focus as the first step for a still image capture.
      */
-    override fun imageCapture() {
+    override fun startFramesCapture() {
         try {
             // This is how to tell the camera to lock focus.
             previewRequestBuilder.set(

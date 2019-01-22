@@ -42,8 +42,9 @@ class CameraViewModel : ViewModel() {
 
         @get:Bindable
         var currentFPS: Int = 0
-            get() {
-                return if (timeStamp > 0) (field * MILLISECONDS_IN_SEC / timeStamp).toInt() else 0
+            set(value) {
+                field = value
+                notifyPropertyChanged(BR.currentFPS)
             }
 
         @get:Bindable
@@ -63,6 +64,9 @@ class CameraViewModel : ViewModel() {
 
     }
 
+    fun setCurrentFPS(fps: Int) {
+        layoutFields.currentFPS = fps
+    }
 
     fun incImageCounter() {
         layoutFields.framesCaptured++
