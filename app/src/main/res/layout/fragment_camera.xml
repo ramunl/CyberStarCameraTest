@@ -60,6 +60,14 @@
                 android:id="@+id/playButton"
                 style="@style/ButtonStyle"/>
 
+        <ImageView
+                android:scaleType="centerInside"
+                android:background="@color/semi_black"
+                android:id="@+id/framePreview"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"/>
     </RelativeLayout>
 
 </layout>

@@ -24,14 +24,12 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Configuration
-import android.graphics.ImageFormat
-import android.graphics.Matrix
-import android.graphics.RectF
-import android.graphics.SurfaceTexture
+import android.graphics.*
 import android.hardware.camera2.*
 import android.hardware.camera2.CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
 import android.hardware.camera2.CameraCharacteristics.SENSOR_ORIENTATION
 import android.hardware.camera2.CameraDevice.TEMPLATE_RECORD
+import android.media.Image
 import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Bundle
@@ -50,12 +48,15 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import kotlinx.android.synthetic.main.fragment_camera.*
 import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ConfirmationDialog
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
 import ru.cyberstar.cameracapturetest.fragments.helpers.CompareSizesByArea
 import ru.cyberstar.cameracapturetest.fragments.helpers.REQUEST_CAMERA_PERMISSION
+import ru.cyberstar.cameracapturetest.tools.ScreenCapture
 import ru.cyberstar.cameracapturetest.views.AutoFitTextureView
+import java.io.FileOutputStream
 import java.io.IOException
 import java.util.Collections
 import java.util.concurrent.Semaphore
@@ -64,6 +65,99 @@ import kotlin.collections.ArrayList
 
 abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
     ActivityCompat.OnRequestPermissionsResultCallback, ImageReader.OnImageAvailableListener {
+    abstract fun onFrameCaptured()
+
+   private lateinit var screenCapture: ScreenCapture
+
+    private var latestBitmap:Bitmap? = null
+
+    fun getBitmap(reader:ImageReader):Bitmap?
+    {
+        var image: Image? = null
+       // var fos: FileOutputStream? = null
+        var bitmap: Bitmap? = null
+
+        try {
+            image = reader.acquireLatestImage()
+            val planes = image!!.planes
+            val buffer = planes[0].buffer
+            bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
+            bitmap!!.copyPixelsFromBuffer(buffer)
+
+           // bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+        } finally {
+
+
+          //  bitmap?.recycle()
+        }
+        image?.close()
+        return bitmap
+    }
+    private fun captureImage(reader: ImageReader): Bitmap? {
+
+        val image = reader.acquireLatestImage()
+        val width = 200
+        val height = 200
+
+        if (image != null) {
+            val planes = image.planes
+            val buffer = planes[0].buffer
+            val pixelStride = planes[0].pixelStride
+            val rowStride = planes[0].rowStride
+            val rowPadding = rowStride - pixelStride * width
+            val bitmapWidth = width + rowPadding / pixelStride
+
+
+            if (latestBitmap == null ||
+                latestBitmap!!.width != bitmapWidth ||
+                latestBitmap!!.height != height
+            ) {
+                if (latestBitmap != null) {
+                    latestBitmap!!.recycle()
+                }
+
+                latestBitmap = Bitmap.createBitmap(
+                    bitmapWidth,
+                    height, Bitmap.Config.ARGB_8888
+                )
+            }
+            try {
+                buffer.rewind()
+                latestBitmap!!.copyPixelsFromBuffer(buffer)
+            } catch (e:Exception) {
+                e.printStackTrace()
+            }
+            image.close()
+        }
+        return latestBitmap
+    }
+        /*val image = reader.acquireLatestImage()
+        context!!.resources.displayMetrics.run {
+            image.planes[0].run {
+                val bitmap = Bitmap.createBitmap(
+                    rowStride / pixelStride, heightPixels, Bitmap.Config.ARGB_8888
+                )
+                try {
+                    bitmap?.copyPixelsFromBuffer(buffer)
+                } catch (e: Exception) {
+                }
+
+                image.close()
+                return bitmap
+            }
+        }*/
+
+
+    override fun onImageAvailable(reader: ImageReader?) {
+        val bmp = screenCapture.toJpeg(reader)
+        bmp?.let {
+            activity?.runOnUiThread {framePreview?.setImageBitmap(bmp)}
+        }
+        onFrameCaptured()
+    }
 
 
     private val FRAGMENT_DIALOG = "dialog"
@@ -210,7 +304,6 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
     }
 
 
-
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         textureView = view.findViewById(R.id.texture)
         /*videoButton = view.findViewById<Button>(R.id.video).also {
@@ -236,6 +329,7 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
             textureView.surfaceTextureListener = surfaceTextureListener
         }
     }
+
     override fun onPause() {
         closeCamera()
         stopBackgroundThread()
@@ -307,7 +401,7 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
      *
      * Lint suppression - permission is checked in [hasPermissionsGranted]
      */
-    var mImageReader: ImageReader? = null
+    //var mImageReader: ImageReader? = null
 
     private fun requestCameraPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
@@ -349,12 +443,14 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
                 width, height, videoSize
             )
 
-            mImageReader = ImageReader.newInstance(
+            screenCapture = ScreenCapture(videoSize.width,  videoSize.height)
+
+            /*mImageReader = ImageReader.newInstance(
                 videoSize.width,
                 videoSize.height,
                 ImageFormat.YUV_420_888, 3
-            )
-            mImageReader?.setOnImageAvailableListener(this, backgroundHandler)
+            )*/
+            screenCapture.mImageReader.setOnImageAvailableListener(this, backgroundHandler)
 
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 textureView.setAspectRatio(previewSize.width, previewSize.height)
@@ -428,11 +524,12 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
             surfaces.add(previewSurface)
             previewRequestBuilder.addTarget(previewSurface)
 
-            val readerSurface = mImageReader!!.surface
+            val readerSurface = screenCapture.mImageReader.surface
             surfaces.add(readerSurface)
             previewRequestBuilder.addTarget(readerSurface)
 
-            cameraDevice!!.createCaptureSession(surfaces,
+            cameraDevice!!.createCaptureSession(
+                surfaces,
                 object : CameraCaptureSession.StateCallback() {
 
                     override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
@@ -590,14 +687,15 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
 
             // Start a capture session
             // Once the session starts, we can update the UI and start recording
-            cameraDevice?.createCaptureSession(surfaces,
+            cameraDevice?.createCaptureSession(
+                surfaces,
                 object : CameraCaptureSession.StateCallback() {
 
                     override fun onConfigured(cameraCaptureSession: CameraCaptureSession) {
                         captureSession = cameraCaptureSession
                         updatePreview()
                         activity?.runOnUiThread {
-                       //     videoButton.setText(R.string.stop)
+                            //     videoButton.setText(R.string.stop)
                             isRecordingVideo = true
                             mediaRecorder?.start()
                         }

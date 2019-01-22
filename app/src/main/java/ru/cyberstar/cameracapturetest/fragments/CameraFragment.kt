@@ -31,6 +31,7 @@ import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel
 
 class CameraFragment : Camera2VideoFragment() {
 
+
     companion object {
         @JvmStatic
         fun newInstance(): CameraFragment = CameraFragment()
@@ -65,20 +66,9 @@ class CameraFragment : Camera2VideoFragment() {
         binding.setVariable(BR.viewModel, viewModel)
     }
 
-    override fun onImageAvailable(reader: ImageReader?) {
-        var image = reader?.acquireLatestImage()
-        var planes = image?.planes
-
-        /*final int total = planes[0].getRowStride() * mHeight;
-        if (mRgbBuffer == null || mRgbBuffer.length < total)
-            mRgbBuffer = new int[total];
-
-        getRGBIntFromPlanes(planes);*/
-
-        image?.close()
+    override fun onFrameCaptured() {
         viewModel.incImageCounter()
     }
-
     override fun onPause() {
         super.onPause()
         ImageCaptureWorker.stop()
