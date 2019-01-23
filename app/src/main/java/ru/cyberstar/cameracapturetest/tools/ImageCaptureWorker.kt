@@ -1,16 +1,18 @@
 package ru.cyberstar.cameracapturetest.tools
 
+import android.media.ImageReader
+import android.util.Size
+import org.jetbrains.anko.doAsync
 import ru.cyberstar.cameracapturetest.fragments.helpers.MILLISECONDS_IN_SEC
-import ru.cyberstar.cameracapturetest.tools.ImageUtil.imageToByteArray
 import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel
 import java.nio.ByteBuffer
-import java.util.*
 import java.util.concurrent.Executors
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 
 object ImageCaptureWorker {
 
+    private var frameByteBufferTemp: List<ByteBuffer>? = null
     private var scheduledFuture: ScheduledFuture<*>? = null
     private var startTime: Long = 0
     private var prevTimeStamp: Long = 0
@@ -49,17 +51,6 @@ object ImageCaptureWorker {
 
                     cameraViewModel!!.updateTimeStamp(timeStamp - startTime)
 
-
-                    /*if (framesQueue.size > 0) {
-                        var planes = framesQueue.removeLast()
-                        var bitmap = imageToByteArray(planes, width, height)
-                        for (plane in planes) {
-                            plane.reset()
-                        }
-                        bitmap?.let {
-                            cameraViewModel!!.updatePreviewIMG(bitmap)
-                        }
-                    }*/
                 }
 
 
@@ -68,15 +59,26 @@ object ImageCaptureWorker {
         )
     }
 
-    private val framesQueue: Deque<List<ByteBuffer>> = LinkedList()
-
-    var width: Int = 0
-    var height: Int = 0
-
-    fun enqueueFrame(planes: List<ByteBuffer>, width: Int, height: Int) {
-       // framesQueue.add(planes)
-        this.width = width
-        this.height = height
+    fun onImageAvailable(reader: ImageReader, frameSize: Size) {
+        cameraViewModel?.incImageCounter()
+        val image = reader.acquireNextImage()
+        if (frameByteBufferTemp == null) {
+            image?.let {
+                val planes = image.planes
+                val yBuffer = deepCopy(planes[0].buffer)
+                val uBuffer = deepCopy(planes[1].buffer)
+                val vBuffer = deepCopy(planes[2].buffer)
+                frameByteBufferTemp = mutableListOf(yBuffer, uBuffer, vBuffer)
+                frameByteBufferTemp?.let { copy ->
+                    doAsync {
+                        val bmp = imageToByteArray(copy, frameSize.width, frameSize.height)
+                        frameByteBufferTemp = null
+                        bmp?.let { cameraViewModel?.updatePreviewIMG(bmp) }
+                    }
+                }
+            }
+        }
+        image?.close()
     }
 
 

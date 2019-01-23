@@ -16,6 +16,7 @@
 
 package ru.cyberstar.cameracapturetest.fragments
 
+import android.media.ImageReader
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -26,10 +27,10 @@ import ru.cyberstar.cameracapturetest.BR
 import ru.cyberstar.cameracapturetest.tools.ImageCaptureWorker
 import ru.cyberstar.cameracapturetest.tools.InjectorUtils
 import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel
-import java.nio.ByteBuffer
 
 class CameraFragment : Camera2VideoFragment() {
 
+    private lateinit var cameraViewModel: CameraViewModel
 
     companion object {
         @JvmStatic
@@ -50,30 +51,14 @@ class CameraFragment : Camera2VideoFragment() {
         return rootView
     }
 
-    /*@Synchronized
-    private fun onPlayButtonClicked(startWorker: Boolean) {
-        if (startWorker) ImageCaptureWorker.start()
-        else ImageCaptureWorker.stop()
-    }*/
-
-    lateinit var viewModel: CameraViewModel
-
     private fun subscribeUI() {
         val factory = InjectorUtils.provideCameraViewModelFactory()
-        viewModel = ViewModelProviders.of(this, factory).get(CameraViewModel::class.java)
-        ImageCaptureWorker.injectModel(viewModel)
-        binding.setVariable(BR.viewModel, viewModel)
+        cameraViewModel = ViewModelProviders.of(this, factory).get(CameraViewModel::class.java)
+        ImageCaptureWorker.injectModel(cameraViewModel)
+        binding.setVariable(BR.viewModel, cameraViewModel)
 
     }
 
-    override fun onFrameCaptured(
-        buffers: List<ByteBuffer>,
-        width: Int,
-        height: Int
-    ) {
-        ImageCaptureWorker.enqueueFrame(buffers, width, height)
-        viewModel.incImageCounter()
-    }
     override fun onPause() {
         super.onPause()
         ImageCaptureWorker.stop()
@@ -82,6 +67,13 @@ class CameraFragment : Camera2VideoFragment() {
     override fun onResume() {
         super.onResume()
         ImageCaptureWorker.start()
+    }
+
+    override fun onImageAvailable(reader: ImageReader?) {
+        var frameSize = cameraFrameSize()
+        if (frameSize != null && reader != null) {
+            ImageCaptureWorker.onImageAvailable(reader, frameSize)
+        }
     }
 
 }

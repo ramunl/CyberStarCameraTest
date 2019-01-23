@@ -32,7 +32,6 @@ import android.hardware.camera2.*
 import android.hardware.camera2.CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
 import android.hardware.camera2.CameraCharacteristics.SENSOR_ORIENTATION
 import android.hardware.camera2.CameraDevice.TEMPLATE_RECORD
-import android.media.Image
 import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Bundle
@@ -51,80 +50,32 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import kotlinx.android.synthetic.main.fragment_camera.*
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
 import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ConfirmationDialog
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
 import ru.cyberstar.cameracapturetest.fragments.helpers.CompareSizesByArea
 import ru.cyberstar.cameracapturetest.fragments.helpers.REQUEST_CAMERA_PERMISSION
-import ru.cyberstar.cameracapturetest.tools.ImageUtil.imageToByteArray
 import ru.cyberstar.cameracapturetest.views.AutoFitTextureView
 import java.io.IOException
-import java.nio.ByteBuffer
 import java.util.Collections
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
-abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
-    ActivityCompat.OnRequestPermissionsResultCallback, ImageReader.OnImageAvailableListener {
-    abstract fun onFrameCaptured(
-        buffers: List<ByteBuffer>,
-        width: Int,
-        height: Int
-    )
+abstract class Camera2VideoFragment() : Fragment(), View.OnClickListener,
+    ActivityCompat.OnRequestPermissionsResultCallback, ImageReader.OnImageAvailableListener,
+    FrameVideoSizeProvider {
 
+    override fun cameraFrameSize(): Size? {
+        return videoSize
+    }
+
+    /**
+     * Tries to open a [CameraDevice]. The result is listened by [stateCallback].
+     *
+     * Lint suppression - permission is checked in [hasPermissionsGranted]
+     */
     private lateinit var mImageReader: ImageReader
-
-    private fun deepCopy(source: ByteBuffer): ByteBuffer {
-
-        var target = ByteBuffer.allocate(source.remaining())
-
-        val sourceP = source.position()
-        val sourceL = source.limit()
-
-        target!!.put(source)
-        target!!.flip()
-
-        source.position(sourceP)
-        source.limit(sourceL)
-        return target
-    }
-
-    var planesCopy: List<ByteBuffer>? = null
-
-    override fun onImageAvailable(reader: ImageReader?) {
-        var image: Image? = reader!!.acquireNextImage()
-
-        if (planesCopy == null) {
-            image?.let {
-
-                val planes = image.planes
-
-                val yBuffer = deepCopy(planes[0].buffer)
-                val uBuffer = deepCopy(planes[1].buffer)
-                val vBuffer = deepCopy(planes[2].buffer)
-
-                planesCopy = mutableListOf(yBuffer, uBuffer, vBuffer)
-                planesCopy?.let { copy ->
-                    onFrameCaptured(copy, previewSize.width, previewSize.height)
-                    doAsync {
-                        val bmp = imageToByteArray(copy, videoSize.width, videoSize.height)
-                        planesCopy = null
-                        uiThread {
-                            bmp?.let { bitmap -> framePreview?.setImageBitmap(bitmap) }
-                        }
-
-                    }
-                }
-            }
-        }
-        image?.close()
-    }
-
-
     private val FRAGMENT_DIALOG = "dialog"
     private val TAG = "Camera2VideoFragment"
     private val SENSOR_ORIENTATION_DEFAULT_DEGREES = 90
@@ -259,6 +210,12 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
 
     protected lateinit var binding: ViewDataBinding
 
+    constructor(parcel: android.os.Parcel) : this() {
+        isRecordingVideo = parcel.readByte() != 0.toByte()
+        sensorOrientation = parcel.readInt()
+        nextVideoAbsolutePath = parcel.readString()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -280,10 +237,6 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
     override fun onResume() {
         super.onResume()
         startBackgroundThread()
-        startCamera()
-    }
-
-    fun startCamera() {
         // When the screen is turned off and turned back on, the SurfaceTexture is already
         // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
         // a camera and start preview from here (otherwise, we wait until the surface is ready in
@@ -294,6 +247,7 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
             textureView.surfaceTextureListener = surfaceTextureListener
         }
     }
+
 
     override fun onPause() {
         closeCamera()
@@ -361,13 +315,6 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
         }
 
 
-    /**
-     * Tries to open a [CameraDevice]. The result is listened by [stateCallback].
-     *
-     * Lint suppression - permission is checked in [hasPermissionsGranted]
-     */
-    //var mImageReader: ImageReader? = null
-
     private fun requestCameraPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
             ConfirmationDialog().show(childFragmentManager, FRAGMENT_DIALOG)
@@ -408,9 +355,8 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
                 width, height, videoSize
             )
 
-            //screenCapture = ScreenCapture(previewSize.width,  previewSize.height)
             mImageReader = ImageReader.newInstance(videoSize.width, videoSize.height, ImageFormat.YUV_420_888, 7)
-            // mImageReader = ImageReader.newInstance(100, 100, ImageFormat.YUV_422_888, 1)
+
             mImageReader.setOnImageAvailableListener(this, backgroundHandler)
 
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -738,5 +684,4 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
             choices[0]
         }
     }
-
 }
