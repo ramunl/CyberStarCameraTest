@@ -13,42 +13,62 @@
  See the License for the specific language governing permissions and
  limitations under the License.
 -->
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
 
-    <ru.cyberstar.cameracapturetest.views.AutoFitTextureView
-        android:id="@+id/texture"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true" />
 
-    <FrameLayout
-        android:id="@+id/control"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/frame_height"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentStart="true"
-        android:background="@color/control_background">
+<layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:bind="http://schemas.android.com/apk/res-auto">
 
-        <Button
-            android:id="@+id/picture"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="@string/picture" />
+    <data>
+        <variable
+                name="viewModel"
+                type="ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel"/>
+    </data>
 
-        <ImageButton
-            android:id="@+id/info"
-            android:contentDescription="@string/description_info"
-            style="@android:style/Widget.Material.Light.Button.Borderless"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_vertical|end"
-            android:padding="@dimen/image_button_padding"
-            android:src="@drawable/ic_action_info" />
+    <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-    </FrameLayout>
 
-</RelativeLayout>
+        <ru.cyberstar.cameracapturetest.views.AutoFitTextureView
+                android:id="@+id/texture"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"/>
+
+        <TextView
+                android:text="@{`FPS: ` + viewModel.layoutFields.currentFPS}"
+                android:id="@+id/currentFPS"
+                style="@style/LabelStyle"/>
+
+        <TextView
+                android:text="@{viewModel.layoutFields.timer}"
+                android:layout_below="@id/currentFPS"
+                android:id="@+id/captureTimer"
+                style="@style/LabelStyle"/>
+
+        <TextView
+                android:layout_alignParentEnd="true"
+                android:text="@{`IMG captured: ` + viewModel.layoutFields.framesCaptured}"
+                android:id="@+id/imagesNumCaptured"
+                style="@style/LabelStyle"/>
+
+
+        <ToggleButton
+                android:visibility="gone"
+                android:layout_alignParentBottom="true"
+                android:layout_centerHorizontal="true"
+                android:textOff="@string/start_label"
+                android:textOn="@string/stop_label"
+                android:id="@+id/playButton"
+                style="@style/ButtonStyle"/>
+
+        <ImageView
+                bind:imageBitmap="@{viewModel.layoutFields.previewBitmap}"
+                android:scaleType="centerInside"
+                android:background="@color/semi_black"
+                android:id="@+id/framePreview"
+                android:layout_width="200dp"
+                android:layout_height="200dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"/>
+    </RelativeLayout>
+
+</layout>

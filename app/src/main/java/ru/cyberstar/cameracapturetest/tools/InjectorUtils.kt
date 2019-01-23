@@ -1,11 +1,11 @@
 /*
- * Copyright 2017 The Android Open Source Project
+ * Copyright 2018 Google LLC
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *       http://www.apache.org/licenses/LICENSE-2.0
+ *     https://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,9 +14,18 @@
  * limitations under the License.
  */
 
-@file:JvmName("Constants")
+package ru.cyberstar.cameracapturetest.tools
 
-package ru.cyberstar.cameracapturetest.fragments
+import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModelFactory
 
-@JvmField val REQUEST_CAMERA_PERMISSION = 1
-@JvmField val PIC_FILE_NAME = "pic.jpg"
+/**
+ * Static methods used to inject classes needed for various Activities and Fragments.
+ */
+object InjectorUtils {
+
+    fun provideCameraViewModelFactory(
+    ): CameraViewModelFactory {
+        return CameraViewModelFactory()
+    }
+
+}

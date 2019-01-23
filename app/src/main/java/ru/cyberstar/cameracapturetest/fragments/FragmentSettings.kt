@@ -1,100 +1,46 @@
 package ru.cyberstar.cameracapturetest.fragments
 
-import android.content.Context
 import android.os.Bundle
-import android.support.v4.app.Fragment
-import android.support.v7.widget.GridLayoutManager
-import android.support.v7.widget.LinearLayoutManager
-import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
+import androidx.fragment.app.Fragment
+import kotlinx.android.synthetic.main.fragment_setting_list.view.*
 import ru.cyberstar.cameracapturetest.R
+import ru.cyberstar.cameracapturetest.fragments.helpers.FPS_DEFAULT
+import ru.cyberstar.cameracapturetest.fragments.helpers.FPS_KEY
+import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper.get
+import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper.prefs
+import ru.cyberstar.cameracapturetest.fragments.helpers.PreferenceHelper.set
 
-import ru.cyberstar.cameracapturetest.fragments.dummy.DummyContent
-import ru.cyberstar.cameracapturetest.fragments.dummy.DummyContent.DummyItem
-
-/**
- * A fragment representing a list of Items.
- * Activities containing this fragment MUST implement the
- * [FragmentSettings.OnListFragmentInteractionListener] interface.
- */
 class FragmentSettings : Fragment() {
 
-    // TODO: Customize parameters
-    private var columnCount = 1
-
-    private var listener: OnListFragmentInteractionListener? = null
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-
-        arguments?.let {
-            columnCount = it.getInt(ARG_COLUMN_COUNT)
-        }
-    }
+    lateinit var fpsEditText: EditText
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
         val view = inflater.inflate(R.layout.fragment_setting_list, container, false)
-
-        // Set the adapter
-        if (view is RecyclerView) {
-            with(view) {
-                layoutManager = when {
-                    columnCount <= 1 -> LinearLayoutManager(context)
-                    else -> GridLayoutManager(context, columnCount)
-                }
-                adapter = SettingRecyclerViewAdapter(DummyContent.ITEMS, listener)
-            }
-        }
+        val fps: Int? = prefs()[FPS_KEY, FPS_DEFAULT]
+        fpsEditText = view.fpsEditText
+        view.fpsEditText.setText(fps.toString())
         return view
     }
 
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        /*if (context is OnListFragmentInteractionListener) {
-            listener = context
-        } else {
-            throw RuntimeException(context.toString() + " must implement OnListFragmentInteractionListener") as Throwable
-        }*/
-    }
-
     override fun onDetach() {
+        fpsEditText.text?.let {
+            val speed: Int = it.toString().toInt()
+            prefs()[FPS_KEY] = speed
+        }
         super.onDetach()
-        listener = null
     }
 
-    /**
-     * This interface must be implemented by activities that contain this
-     * fragment to allow an interaction in this fragment to be communicated
-     * to the activity and potentially other fragments contained in that
-     * activity.
-     *
-     *
-     * See the Android Training lesson
-     * [Communicating with Other Fragments](http://developer.android.com/training/basics/fragments/communicating.html)
-     * for more information.
-     */
-    interface OnListFragmentInteractionListener {
-        // TODO: Update argument type and name
-        fun onListFragmentInteraction(item: DummyItem?)
-    }
 
     companion object {
-
-        // TODO: Customize parameter argument names
-        const val ARG_COLUMN_COUNT = "column-count"
-
         // TODO: Customize parameter initialization
         @JvmStatic
-        fun newInstance(columnCount: Int) =
-            FragmentSettings().apply {
-                arguments = Bundle().apply {
-                    putInt(ARG_COLUMN_COUNT, columnCount)
-                }
-            }
+        fun newInstance() = FragmentSettings()
     }
 }
