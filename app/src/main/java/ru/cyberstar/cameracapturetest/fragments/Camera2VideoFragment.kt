@@ -38,6 +38,7 @@ import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Parcelable
 import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
@@ -59,70 +60,27 @@ import ru.cyberstar.cameracapturetest.fragments.dialogs.ConfirmationDialog
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
 import ru.cyberstar.cameracapturetest.fragments.helpers.CompareSizesByArea
 import ru.cyberstar.cameracapturetest.fragments.helpers.REQUEST_CAMERA_PERMISSION
-import ru.cyberstar.cameracapturetest.tools.ImageUtil.imageToByteArray
 import ru.cyberstar.cameracapturetest.views.AutoFitTextureView
 import java.io.IOException
-import java.nio.ByteBuffer
 import java.util.Collections
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
-abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
-    ActivityCompat.OnRequestPermissionsResultCallback, ImageReader.OnImageAvailableListener {
-    abstract fun onFrameCaptured(
-        buffers: List<ByteBuffer>,
-        width: Int,
-        height: Int
-    )
+abstract class Camera2VideoFragment() : Fragment(), View.OnClickListener,
+    ActivityCompat.OnRequestPermissionsResultCallback, ImageReader.OnImageAvailableListener,
+    VideSizeprovider, Parcelable {
 
+    override fun videoSizeChosen(): Size? {
+        return videoSize
+    }
+    /**
+     * Tries to open a [CameraDevice]. The result is listened by [stateCallback].
+     *
+     * Lint suppression - permission is checked in [hasPermissionsGranted]
+     */
     private lateinit var mImageReader: ImageReader
 
-    private fun deepCopy(source: ByteBuffer): ByteBuffer {
-
-        var target = ByteBuffer.allocate(source.remaining())
-
-        val sourceP = source.position()
-        val sourceL = source.limit()
-
-        target!!.put(source)
-        target!!.flip()
-
-        source.position(sourceP)
-        source.limit(sourceL)
-        return target
-    }
-
-    var planesCopy: List<ByteBuffer>? = null
-
-    override fun onImageAvailable(reader: ImageReader?) {
-        var image: Image? = reader!!.acquireNextImage()
-
-        if (planesCopy == null) {
-            image?.let {
-
-                val planes = image.planes
-
-                val yBuffer = deepCopy(planes[0].buffer)
-                val uBuffer = deepCopy(planes[1].buffer)
-                val vBuffer = deepCopy(planes[2].buffer)
-
-                planesCopy = mutableListOf(yBuffer, uBuffer, vBuffer)
-                planesCopy?.let { copy ->
-                    onFrameCaptured(copy, previewSize.width, previewSize.height)
-                    doAsync {
-                        val bmp = imageToByteArray(copy, videoSize.width, videoSize.height)
-                        planesCopy = null
-                        uiThread {
-                            bmp?.let { bitmap -> framePreview?.setImageBitmap(bitmap) }
-                        }
-
-                    }
-                }
-            }
-        }
-        image?.close()
-    }
 
 
     private val FRAGMENT_DIALOG = "dialog"
@@ -259,6 +217,12 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
 
     protected lateinit var binding: ViewDataBinding
 
+    constructor(parcel: android.os.Parcel) : this() {
+        isRecordingVideo = parcel.readByte() != 0.toByte()
+        sensorOrientation = parcel.readInt()
+        nextVideoAbsolutePath = parcel.readString()
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -280,10 +244,6 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
     override fun onResume() {
         super.onResume()
         startBackgroundThread()
-        startCamera()
-    }
-
-    fun startCamera() {
         // When the screen is turned off and turned back on, the SurfaceTexture is already
         // available, and "onSurfaceTextureAvailable" will not be called. In that case, we can open
         // a camera and start preview from here (otherwise, we wait until the surface is ready in
@@ -294,6 +254,7 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
             textureView.surfaceTextureListener = surfaceTextureListener
         }
     }
+
 
     override fun onPause() {
         closeCamera()
@@ -361,13 +322,6 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
         }
 
 
-    /**
-     * Tries to open a [CameraDevice]. The result is listened by [stateCallback].
-     *
-     * Lint suppression - permission is checked in [hasPermissionsGranted]
-     */
-    //var mImageReader: ImageReader? = null
-
     private fun requestCameraPermission() {
         if (shouldShowRequestPermissionRationale(Manifest.permission.CAMERA)) {
             ConfirmationDialog().show(childFragmentManager, FRAGMENT_DIALOG)
@@ -408,9 +362,8 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
                 width, height, videoSize
             )
 
-            //screenCapture = ScreenCapture(previewSize.width,  previewSize.height)
             mImageReader = ImageReader.newInstance(videoSize.width, videoSize.height, ImageFormat.YUV_420_888, 7)
-            // mImageReader = ImageReader.newInstance(100, 100, ImageFormat.YUV_422_888, 1)
+
             mImageReader.setOnImageAvailableListener(this, backgroundHandler)
 
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
@@ -736,6 +689,26 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
             Collections.min(bigEnough, CompareSizesByArea())
         } else {
             choices[0]
+        }
+    }
+
+    override fun writeToParcel(parcel: android.os.Parcel, flags: Int) {
+        parcel.writeByte(if (isRecordingVideo) 1 else 0)
+        parcel.writeInt(sensorOrientation)
+        parcel.writeString(nextVideoAbsolutePath)
+    }
+
+    override fun describeContents(): Int {
+        return 0
+    }
+
+    companion object CREATOR : android.os.Parcelable.Creator<Camera2VideoFragment> {
+        override fun createFromParcel(parcel: android.os.Parcel): Camera2VideoFragment {
+            return Camera2VideoFragment(parcel)
+        }
+
+        override fun newArray(size: Int): Array<Camera2VideoFragment?> {
+            return arrayOfNulls(size)
         }
     }
 

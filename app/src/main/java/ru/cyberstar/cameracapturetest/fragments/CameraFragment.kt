@@ -16,15 +16,21 @@
 
 package ru.cyberstar.cameracapturetest.fragments
 
+import android.media.Image
+import android.media.ImageReader
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProviders
+import kotlinx.android.synthetic.main.fragment_camera.*
 import kotlinx.android.synthetic.main.fragment_camera.view.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import ru.cyberstar.cameracapturetest.BR
 import ru.cyberstar.cameracapturetest.tools.ImageCaptureWorker
 import ru.cyberstar.cameracapturetest.tools.InjectorUtils
+import ru.cyberstar.cameracapturetest.tools.deepCopy
 import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel
 import java.nio.ByteBuffer
 
@@ -50,12 +56,6 @@ class CameraFragment : Camera2VideoFragment() {
         return rootView
     }
 
-    /*@Synchronized
-    private fun onPlayButtonClicked(startWorker: Boolean) {
-        if (startWorker) ImageCaptureWorker.start()
-        else ImageCaptureWorker.stop()
-    }*/
-
     lateinit var viewModel: CameraViewModel
 
     private fun subscribeUI() {
@@ -66,14 +66,6 @@ class CameraFragment : Camera2VideoFragment() {
 
     }
 
-    override fun onFrameCaptured(
-        buffers: List<ByteBuffer>,
-        width: Int,
-        height: Int
-    ) {
-        ImageCaptureWorker.enqueueFrame(buffers, width, height)
-        viewModel.incImageCounter()
-    }
     override fun onPause() {
         super.onPause()
         ImageCaptureWorker.stop()
@@ -82,6 +74,38 @@ class CameraFragment : Camera2VideoFragment() {
     override fun onResume() {
         super.onResume()
         ImageCaptureWorker.start()
+    }
+
+    var planesCopy: List<ByteBuffer>? = null
+
+    override fun onImageAvailable(reader: ImageReader?) {
+        var image: Image? = reader!!.acquireNextImage()
+
+        if (planesCopy == null) {
+            image?.let {
+
+                val planes = image.planes
+                val yBuffer = deepCopy(planes[0].buffer)
+                val uBuffer = deepCopy(planes[1].buffer)
+                val vBuffer = deepCopy(planes[2].buffer)
+
+                planesCopy = mutableListOf(yBuffer, uBuffer, vBuffer)
+                planesCopy?.let { copy ->
+
+                    ImageCaptureWorker.enqueueFrame(buffers, width, height)
+                    viewModel.incImageCounter()
+                    doAsync {
+                        val bmp = imageToByteArray(copy, videoSize.width, videoSize.height)
+                        planesCopy = null
+                        uiThread {
+                            bmp?.let { bitmap -> framePreview?.setImageBitmap(bitmap) }
+                        }
+
+                    }
+                }
+            }
+        }
+        image?.close()
     }
 
 }
