@@ -111,7 +111,7 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
                 planesCopy?.let { copy ->
                     onFrameCaptured(copy, previewSize.width, previewSize.height)
                     doAsync {
-                        val bmp = imageToByteArray(copy, previewSize.width, previewSize.height)
+                        val bmp = imageToByteArray(copy, videoSize.width, videoSize.height)
                         planesCopy = null
                         uiThread {
                             bmp?.let { bitmap -> framePreview?.setImageBitmap(bitmap) }
@@ -409,8 +409,8 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
             )
 
             //screenCapture = ScreenCapture(previewSize.width,  previewSize.height)
-            mImageReader = ImageReader.newInstance(previewSize.width, previewSize.height, ImageFormat.YUV_420_888, 1)
-            // mImageReader = ImageReader.newInstance(100, 100, ImageFormat.YUV_420_888, 1)
+            mImageReader = ImageReader.newInstance(videoSize.width, videoSize.height, ImageFormat.YUV_420_888, 7)
+            // mImageReader = ImageReader.newInstance(100, 100, ImageFormat.YUV_422_888, 1)
             mImageReader.setOnImageAvailableListener(this, backgroundHandler)
 
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
