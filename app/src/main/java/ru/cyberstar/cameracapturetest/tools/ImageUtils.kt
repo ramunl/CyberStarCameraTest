@@ -47,7 +47,7 @@ fun imageToByteArray(image: Image, width: Int, height: Int): Bitmap? {
 
     data = NV21toJPEG(
         YUV_420_888toNV21(image),
-        image.getWidth(), image.getHeight()
+        image.width, image.height
     )
 
     val boundOption = BitmapFactory.Options()

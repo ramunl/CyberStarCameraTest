@@ -32,13 +32,11 @@ import android.hardware.camera2.*
 import android.hardware.camera2.CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
 import android.hardware.camera2.CameraCharacteristics.SENSOR_ORIENTATION
 import android.hardware.camera2.CameraDevice.TEMPLATE_RECORD
-import android.media.Image
 import android.media.ImageReader
 import android.media.MediaRecorder
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
-import android.os.Parcelable
 import android.util.Log
 import android.util.Size
 import android.util.SparseIntArray
@@ -52,9 +50,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
-import kotlinx.android.synthetic.main.fragment_camera.*
-import org.jetbrains.anko.doAsync
-import org.jetbrains.anko.uiThread
 import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ConfirmationDialog
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
@@ -69,20 +64,18 @@ import kotlin.collections.ArrayList
 
 abstract class Camera2VideoFragment() : Fragment(), View.OnClickListener,
     ActivityCompat.OnRequestPermissionsResultCallback, ImageReader.OnImageAvailableListener,
-    VideSizeprovider, Parcelable {
+    FrameVideoSizeProvider {
 
-    override fun videoSizeChosen(): Size? {
+    override fun cameraFrameSize(): Size? {
         return videoSize
     }
+
     /**
      * Tries to open a [CameraDevice]. The result is listened by [stateCallback].
      *
      * Lint suppression - permission is checked in [hasPermissionsGranted]
      */
     private lateinit var mImageReader: ImageReader
-
-
-
     private val FRAGMENT_DIALOG = "dialog"
     private val TAG = "Camera2VideoFragment"
     private val SENSOR_ORIENTATION_DEFAULT_DEGREES = 90
@@ -691,25 +684,4 @@ abstract class Camera2VideoFragment() : Fragment(), View.OnClickListener,
             choices[0]
         }
     }
-
-    override fun writeToParcel(parcel: android.os.Parcel, flags: Int) {
-        parcel.writeByte(if (isRecordingVideo) 1 else 0)
-        parcel.writeInt(sensorOrientation)
-        parcel.writeString(nextVideoAbsolutePath)
-    }
-
-    override fun describeContents(): Int {
-        return 0
-    }
-
-    companion object CREATOR : android.os.Parcelable.Creator<Camera2VideoFragment> {
-        override fun createFromParcel(parcel: android.os.Parcel): Camera2VideoFragment {
-            return Camera2VideoFragment(parcel)
-        }
-
-        override fun newArray(size: Int): Array<Camera2VideoFragment?> {
-            return arrayOfNulls(size)
-        }
-    }
-
 }

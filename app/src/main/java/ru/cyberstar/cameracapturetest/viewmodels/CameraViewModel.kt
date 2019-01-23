@@ -83,8 +83,9 @@ class CameraViewModel : ViewModel() {
     }
 
     fun updatePreviewIMG(bitmap: Bitmap) {
-        layoutFields.previewBitmap =  bitmap
+        layoutFields.previewBitmap = bitmap
     }
+
     fun setCurrentFPS(fps: Int) {
         layoutFields.currentFPS = fps
     }
