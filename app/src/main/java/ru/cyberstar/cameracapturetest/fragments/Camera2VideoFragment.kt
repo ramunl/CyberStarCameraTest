@@ -24,7 +24,10 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.pm.PackageManager.PERMISSION_GRANTED
 import android.content.res.Configuration
-import android.graphics.*
+import android.graphics.ImageFormat
+import android.graphics.Matrix
+import android.graphics.RectF
+import android.graphics.SurfaceTexture
 import android.hardware.camera2.*
 import android.hardware.camera2.CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP
 import android.hardware.camera2.CameraCharacteristics.SENSOR_ORIENTATION
@@ -49,15 +52,17 @@ import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import kotlinx.android.synthetic.main.fragment_camera.*
+import org.jetbrains.anko.doAsync
+import org.jetbrains.anko.uiThread
 import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ConfirmationDialog
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
 import ru.cyberstar.cameracapturetest.fragments.helpers.CompareSizesByArea
 import ru.cyberstar.cameracapturetest.fragments.helpers.REQUEST_CAMERA_PERMISSION
-import ru.cyberstar.cameracapturetest.tools.ScreenCapture
+import ru.cyberstar.cameracapturetest.tools.ImageUtil.imageToByteArray
 import ru.cyberstar.cameracapturetest.views.AutoFitTextureView
-import java.io.FileOutputStream
 import java.io.IOException
+import java.nio.ByteBuffer
 import java.util.Collections
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
@@ -65,98 +70,58 @@ import kotlin.collections.ArrayList
 
 abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
     ActivityCompat.OnRequestPermissionsResultCallback, ImageReader.OnImageAvailableListener {
-    abstract fun onFrameCaptured()
+    abstract fun onFrameCaptured(
+        buffers: List<ByteBuffer>,
+        width: Int,
+        height: Int
+    )
 
-   private lateinit var screenCapture: ScreenCapture
+    private lateinit var mImageReader: ImageReader
 
-    private var latestBitmap:Bitmap? = null
+    private fun deepCopy(source: ByteBuffer): ByteBuffer {
 
-    fun getBitmap(reader:ImageReader):Bitmap?
-    {
-        var image: Image? = null
-       // var fos: FileOutputStream? = null
-        var bitmap: Bitmap? = null
+        var target = ByteBuffer.allocate(source.remaining())
 
-        try {
-            image = reader.acquireLatestImage()
-            val planes = image!!.planes
-            val buffer = planes[0].buffer
-            bitmap = Bitmap.createBitmap(200, 200, Bitmap.Config.ARGB_8888)
-            bitmap!!.copyPixelsFromBuffer(buffer)
+        val sourceP = source.position()
+        val sourceL = source.limit()
 
-           // bitmap.compress(Bitmap.CompressFormat.JPEG, 100, fos)
+        target!!.put(source)
+        target!!.flip()
 
-        } catch (e: Exception) {
-            e.printStackTrace()
-        } finally {
-
-
-          //  bitmap?.recycle()
-        }
-        image?.close()
-        return bitmap
+        source.position(sourceP)
+        source.limit(sourceL)
+        return target
     }
-    private fun captureImage(reader: ImageReader): Bitmap? {
 
-        val image = reader.acquireLatestImage()
-        val width = 200
-        val height = 200
-
-        if (image != null) {
-            val planes = image.planes
-            val buffer = planes[0].buffer
-            val pixelStride = planes[0].pixelStride
-            val rowStride = planes[0].rowStride
-            val rowPadding = rowStride - pixelStride * width
-            val bitmapWidth = width + rowPadding / pixelStride
-
-
-            if (latestBitmap == null ||
-                latestBitmap!!.width != bitmapWidth ||
-                latestBitmap!!.height != height
-            ) {
-                if (latestBitmap != null) {
-                    latestBitmap!!.recycle()
-                }
-
-                latestBitmap = Bitmap.createBitmap(
-                    bitmapWidth,
-                    height, Bitmap.Config.ARGB_8888
-                )
-            }
-            try {
-                buffer.rewind()
-                latestBitmap!!.copyPixelsFromBuffer(buffer)
-            } catch (e:Exception) {
-                e.printStackTrace()
-            }
-            image.close()
-        }
-        return latestBitmap
-    }
-        /*val image = reader.acquireLatestImage()
-        context!!.resources.displayMetrics.run {
-            image.planes[0].run {
-                val bitmap = Bitmap.createBitmap(
-                    rowStride / pixelStride, heightPixels, Bitmap.Config.ARGB_8888
-                )
-                try {
-                    bitmap?.copyPixelsFromBuffer(buffer)
-                } catch (e: Exception) {
-                }
-
-                image.close()
-                return bitmap
-            }
-        }*/
-
+    var planesCopy: List<ByteBuffer>? = null
 
     override fun onImageAvailable(reader: ImageReader?) {
-        val bmp = screenCapture.startCapture(context!!, reader)
-        bmp?.let {
-            activity?.runOnUiThread {framePreview?.setImageBitmap(bmp)}
+        var image: Image? = reader!!.acquireNextImage()
+
+        if (planesCopy == null) {
+            image?.let {
+
+                val planes = image.planes
+
+                val yBuffer = deepCopy(planes[0].buffer)
+                val uBuffer = deepCopy(planes[1].buffer)
+                val vBuffer = deepCopy(planes[2].buffer)
+
+                planesCopy = mutableListOf(yBuffer, uBuffer, vBuffer)
+                planesCopy?.let { copy ->
+                    onFrameCaptured(copy, previewSize.width, previewSize.height)
+                    doAsync {
+                        val bmp = imageToByteArray(copy, previewSize.width, previewSize.height)
+                        planesCopy = null
+                        uiThread {
+                            bmp?.let { bitmap -> framePreview?.setImageBitmap(bitmap) }
+                        }
+
+                    }
+                }
+            }
         }
-        onFrameCaptured()
+        image?.close()
     }
 
 
@@ -443,14 +408,10 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
                 width, height, videoSize
             )
 
-            screenCapture = ScreenCapture(previewSize.width,  previewSize.height)
-
-            /*mImageReader = ImageReader.newInstance(
-                videoSize.width,
-                videoSize.height,
-                ImageFormat.YUV_420_888, 3
-            )*/
-            screenCapture.mImageReader.setOnImageAvailableListener(this, backgroundHandler)
+            //screenCapture = ScreenCapture(previewSize.width,  previewSize.height)
+            mImageReader = ImageReader.newInstance(previewSize.width, previewSize.height, ImageFormat.YUV_420_888, 1)
+            // mImageReader = ImageReader.newInstance(100, 100, ImageFormat.YUV_420_888, 1)
+            mImageReader.setOnImageAvailableListener(this, backgroundHandler)
 
             if (resources.configuration.orientation == Configuration.ORIENTATION_LANDSCAPE) {
                 textureView.setAspectRatio(previewSize.width, previewSize.height)
@@ -524,7 +485,7 @@ abstract class Camera2VideoFragment : Fragment(), View.OnClickListener,
             surfaces.add(previewSurface)
             previewRequestBuilder.addTarget(previewSurface)
 
-            val readerSurface = screenCapture.mImageReader.surface
+            val readerSurface = mImageReader.surface
             surfaces.add(readerSurface)
             previewRequestBuilder.addTarget(readerSurface)
 

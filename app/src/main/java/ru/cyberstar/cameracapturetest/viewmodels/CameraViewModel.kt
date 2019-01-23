@@ -16,13 +16,21 @@
 
 package ru.cyberstar.cameracapturetest.viewmodels
 
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
+import android.widget.ImageView
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import androidx.lifecycle.ViewModel
 import ru.cyberstar.cameracapturetest.BR
-import ru.cyberstar.cameracapturetest.fragments.helpers.MILLISECONDS_IN_SEC
+import ru.cyberstar.cameracapturetest.CyberApp
 import java.text.SimpleDateFormat
 import java.util.*
+import androidx.databinding.BindingAdapter
+
+
+
 
 class CameraViewModel : ViewModel() {
 
@@ -37,7 +45,6 @@ class CameraViewModel : ViewModel() {
             set(value) {
                 field = value
                 notifyPropertyChanged(BR.timer)
-                notifyPropertyChanged(BR.currentFPS)
             }
 
         @get:Bindable
@@ -54,6 +61,28 @@ class CameraViewModel : ViewModel() {
                 notifyPropertyChanged(BR.framesCaptured)
             }
 
+        @get:Bindable
+        var previewBitmap: Bitmap? = null
+            set(value) {
+                field = value
+                notifyPropertyChanged(BR.previewBitmap)
+            }
+
+
+        object BindingAdapters {
+            @BindingAdapter("bind:imageBitmap")
+            @JvmStatic
+            fun loadImage(iv: ImageView?, bitmap: Bitmap?) {
+                bitmap?.let { iv?.setImageBitmap(bitmap) }
+            }
+        }
+
+
+
+        /*@BindingAdapter("bind:imageBitmap")
+        fun loadImage(iv: ImageView?, bitmap: Bitmap?) {
+            bitmap?.let { iv?.setImageBitmap(bitmap) }
+        }*/
 
         fun updateTimeStamp(timeStamp: Long) {
             timer = timerFormat.format(timeStamp)
@@ -62,8 +91,12 @@ class CameraViewModel : ViewModel() {
 
         private var timeStamp: Long = 0
 
+        //private var previewBmp: Bitmap? = null
     }
 
+    fun updatePreviewIMG(bitmap: Bitmap) {
+        layoutFields.previewBitmap =  bitmap
+    }
     fun setCurrentFPS(fps: Int) {
         layoutFields.currentFPS = fps
     }

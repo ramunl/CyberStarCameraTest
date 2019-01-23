@@ -16,7 +16,6 @@
 
 package ru.cyberstar.cameracapturetest.fragments
 
-import android.media.ImageReader
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -24,10 +23,10 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.synthetic.main.fragment_camera.view.*
 import ru.cyberstar.cameracapturetest.BR
-import ru.cyberstar.cameracapturetest.tools.CameraProvider
 import ru.cyberstar.cameracapturetest.tools.ImageCaptureWorker
 import ru.cyberstar.cameracapturetest.tools.InjectorUtils
 import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel
+import java.nio.ByteBuffer
 
 class CameraFragment : Camera2VideoFragment() {
 
@@ -45,17 +44,17 @@ class CameraFragment : Camera2VideoFragment() {
     ): View? {
         val rootView = super.onCreateView(inflater, container, savedInstanceState)
         rootView!!.playButton!!.setOnCheckedChangeListener { _, isChecked ->
-            onPlayButtonClicked(isChecked)
+            //onPlayButtonClicked(isChecked)
         }
         subscribeUI()
         return rootView
     }
 
-    @Synchronized
+    /*@Synchronized
     private fun onPlayButtonClicked(startWorker: Boolean) {
         if (startWorker) ImageCaptureWorker.start()
         else ImageCaptureWorker.stop()
-    }
+    }*/
 
     lateinit var viewModel: CameraViewModel
 
@@ -64,9 +63,15 @@ class CameraFragment : Camera2VideoFragment() {
         viewModel = ViewModelProviders.of(this, factory).get(CameraViewModel::class.java)
         ImageCaptureWorker.injectModel(viewModel)
         binding.setVariable(BR.viewModel, viewModel)
+
     }
 
-    override fun onFrameCaptured() {
+    override fun onFrameCaptured(
+        buffers: List<ByteBuffer>,
+        width: Int,
+        height: Int
+    ) {
+        ImageCaptureWorker.enqueueFrame(buffers, width, height)
         viewModel.incImageCounter()
     }
     override fun onPause() {

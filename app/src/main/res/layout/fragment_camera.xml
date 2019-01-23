@@ -15,7 +15,7 @@
 -->
 
 
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:bind="http://schemas.android.com/apk/res-auto">
 
     <data>
         <variable
@@ -61,6 +61,7 @@
                 style="@style/ButtonStyle"/>
 
         <ImageView
+                bind:imageBitmap="@{viewModel.layoutFields.previewBitmap}"
                 android:scaleType="centerInside"
                 android:background="@color/semi_black"
                 android:id="@+id/framePreview"
