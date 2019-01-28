@@ -28,7 +28,7 @@
             android:layout_height="match_parent">
 
 
-        <ru.cyberstar.cameracapturetest.views.AutoFitTextureView
+        <ru.cyberstar.cameracapturetest.fragments.helpers.AutoFitTextureView
                 android:id="@+id/texture"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"/>
@@ -52,7 +52,7 @@
 
 
         <ToggleButton
-                android:visibility="gone"
+                android:visibility="visible"
                 android:layout_alignParentBottom="true"
                 android:layout_centerHorizontal="true"
                 android:textOff="@string/start_label"

@@ -50,19 +50,20 @@ import androidx.databinding.DataBindingUtil
 import androidx.databinding.ViewDataBinding
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
+import com.arellomobile.mvp.MvpAppCompatFragment
 import ru.cyberstar.cameracapturetest.R
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ConfirmationDialog
 import ru.cyberstar.cameracapturetest.fragments.dialogs.ErrorDialog
 import ru.cyberstar.cameracapturetest.fragments.helpers.CompareSizesByArea
 import ru.cyberstar.cameracapturetest.fragments.helpers.REQUEST_CAMERA_PERMISSION
-import ru.cyberstar.cameracapturetest.views.AutoFitTextureView
+import ru.cyberstar.cameracapturetest.fragments.helpers.AutoFitTextureView
 import java.io.IOException
 import java.util.Collections
 import java.util.concurrent.Semaphore
 import java.util.concurrent.TimeUnit
 import kotlin.collections.ArrayList
 
-abstract class Camera2VideoFragment() : Fragment(), View.OnClickListener,
+abstract class Camera2VideoFragment() : MvpFragment(), View.OnClickListener,
     ActivityCompat.OnRequestPermissionsResultCallback, ImageReader.OnImageAvailableListener,
     FrameVideoSizeProvider {
 

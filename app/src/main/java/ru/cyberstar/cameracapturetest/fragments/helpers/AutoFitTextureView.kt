@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package ru.cyberstar.cameracapturetest.views
+package ru.cyberstar.cameracapturetest.fragments.helpers
 
 import android.content.Context
 import android.util.AttributeSet

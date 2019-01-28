@@ -86,12 +86,12 @@ class CameraViewModel : ViewModel() {
         layoutFields.previewBitmap = bitmap
     }
 
-    fun setCurrentFPS(fps: Int) {
+    fun updateFPS(fps: Int) {
         layoutFields.currentFPS = fps
     }
 
-    fun incImageCounter() {
-        layoutFields.framesCaptured++
+    fun updateImageCounter(imgCount:Int) {
+        layoutFields.framesCaptured = imgCount
     }
 
     fun resetImageCounter() {
