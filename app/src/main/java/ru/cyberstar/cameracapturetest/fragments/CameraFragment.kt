@@ -24,7 +24,6 @@ import android.view.ViewGroup
 import androidx.lifecycle.ViewModelProviders
 import kotlinx.android.synthetic.main.fragment_camera.view.*
 import ru.cyberstar.cameracapturetest.BR
-import ru.cyberstar.cameracapturetest.tools.ImageCaptureWorker
 import ru.cyberstar.cameracapturetest.tools.InjectorUtils
 import ru.cyberstar.cameracapturetest.viewmodels.CameraViewModel
 
@@ -45,7 +44,8 @@ class CameraFragment : Camera2VideoFragment() {
     ): View? {
         val rootView = super.onCreateView(inflater, container, savedInstanceState)
         rootView!!.playButton!!.setOnCheckedChangeListener { _, isChecked ->
-            //onPlayButtonClicked(isChecked)
+            if(isChecked) cameraViewModel.startCapture()
+            else cameraViewModel.stopCapture()
         }
         subscribeUI()
         return rootView
@@ -54,25 +54,22 @@ class CameraFragment : Camera2VideoFragment() {
     private fun subscribeUI() {
         val factory = InjectorUtils.provideCameraViewModelFactory()
         cameraViewModel = ViewModelProviders.of(this, factory).get(CameraViewModel::class.java)
-        ImageCaptureWorker.injectModel(cameraViewModel)
         binding.setVariable(BR.viewModel, cameraViewModel)
 
     }
 
     override fun onPause() {
         super.onPause()
-        ImageCaptureWorker.stop()
     }
 
     override fun onResume() {
         super.onResume()
-        ImageCaptureWorker.start()
     }
 
     override fun onImageAvailable(reader: ImageReader?) {
         var frameSize = cameraFrameSize()
         if (frameSize != null && reader != null) {
-            ImageCaptureWorker.onImageAvailable(reader, frameSize)
+            cameraViewModel.onImageAvailable(reader, frameSize)
         }
     }
 

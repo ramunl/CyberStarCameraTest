@@ -16,91 +16,68 @@
 
 package ru.cyberstar.cameracapturetest.viewmodels
 
-import android.graphics.Bitmap
-import android.widget.ImageView
-import androidx.databinding.BaseObservable
-import androidx.databinding.Bindable
-import androidx.databinding.BindingAdapter
+import android.media.ImageReader
+import android.util.Size
 import androidx.lifecycle.ViewModel
-import ru.cyberstar.cameracapturetest.BR
-import java.text.SimpleDateFormat
-import java.util.*
+import org.jetbrains.anko.doAsync
+import ru.cyberstar.cameracapturetest.model.ImageCaptureListener
+import ru.cyberstar.cameracapturetest.model.ImageCaptureTimer
+import ru.cyberstar.cameracapturetest.tools.deepCopy
+import ru.cyberstar.cameracapturetest.tools.imageToByteArray
+import java.nio.ByteBuffer
 
 
 class CameraViewModel : ViewModel() {
 
+    var framesCapturedPrev: Int = 0
     var layoutFields = CameraLayoutFields()
+    private var frameByteBufferTemp: List<ByteBuffer>? = null
 
-    class CameraLayoutFields : BaseObservable() {
-
-        private val timerFormat = SimpleDateFormat("mm:ss", Locale.getDefault())
-
-        @get:Bindable
-        var timer: String = ""
-            set(value) {
-                field = value
-                notifyPropertyChanged(BR.timer)
-            }
-
-        @get:Bindable
-        var currentFPS: Int = 0
-            set(value) {
-                field = value
-                notifyPropertyChanged(BR.currentFPS)
-            }
-
-        @get:Bindable
-        var framesCaptured: Int = 0
-            set(value) {
-                field = value
-                notifyPropertyChanged(BR.framesCaptured)
-            }
-
-        @get:Bindable
-        var previewBitmap: Bitmap? = null
-            set(value) {
-                field = value
-                notifyPropertyChanged(BR.previewBitmap)
-            }
-
-
-        object BindingAdapters {
-            @BindingAdapter("bind:imageBitmap")
-            @JvmStatic
-            fun loadImage(iv: ImageView?, bitmap: Bitmap?) {
-                bitmap?.let { iv?.setImageBitmap(bitmap) }
-            }
-        }
-
-
-        fun updateTimeStamp(timeStamp: Long) {
-            timer = timerFormat.format(timeStamp)
-            this.timeStamp = timeStamp
-        }
-
-        private var timeStamp: Long = 0
-
+    init {
+        startCapture()
     }
 
-    fun updatePreviewIMG(bitmap: Bitmap) {
-        layoutFields.previewBitmap = bitmap
-    }
-
-    fun setCurrentFPS(fps: Int) {
-        layoutFields.currentFPS = fps
-    }
-
-    fun incImageCounter() {
-        layoutFields.framesCaptured++
-    }
-
-    fun resetImageCounter() {
+    fun stopCapture() {
         layoutFields.framesCaptured = 0
+        layoutFields.updateTimeStamp(0)
+        ImageCaptureTimer.stop()
     }
 
-    fun updateTimeStamp(timeStamp: Long) {
-        layoutFields.updateTimeStamp(timeStamp)
+    fun startCapture() {
+        ImageCaptureTimer.start(object : ImageCaptureListener {
+            override fun onTimeChanged(timeStamp: Long) {
+                val fps = layoutFields.framesCaptured - framesCapturedPrev
+                layoutFields.currentFPS = fps
+                framesCapturedPrev = layoutFields.framesCaptured
+                layoutFields.updateTimeStamp(timeStamp)
+            }
+        })
     }
 
+    fun onImageAvailable(reader: ImageReader, frameSize: Size) {
+        layoutFields.framesCaptured++
+        val image = reader.acquireNextImage()
+        if (frameByteBufferTemp == null) {
+            image?.let {
+                val planes = image.planes
+                val yBuffer = deepCopy(planes[0].buffer)
+                val uBuffer = deepCopy(planes[1].buffer)
+                val vBuffer = deepCopy(planes[2].buffer)
+                frameByteBufferTemp = mutableListOf(yBuffer, uBuffer, vBuffer)
+                frameByteBufferTemp?.let { copy ->
+                    doAsync {
+                        val bmp = imageToByteArray(
+                            copy,
+                            frameSize.width,
+                            frameSize.height
+                        )
+                        frameByteBufferTemp = null
+                        bmp?.let { layoutFields.previewBitmap = bmp }
+                    }
+                }
+            }
+        }
+        image?.close()
+    }
 
 }
